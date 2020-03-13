@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "854975355899",
+    "firebase_url": "https://pothole-tracker-d7332.firebaseio.com",
+    "project_id": "pothole-tracker-d7332",
+    "storage_bucket": "pothole-tracker-d7332.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:854975355899:android:e324be8a48bf2134a8895e",
+        "android_client_info": {
+          "package_name": "com.example.myapplication"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "854975355899-cfl7t66db2pjpg80s1c9hb8f9pitf5n3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.myapplication",
+            "certificate_hash": "4f53e110caaf15c11f0cf3c249fba0eb3a8b4a48"
+          }
+        },
+        {
+          "client_id": "854975355899-f1kllhr224nc0b4n4j1jb2lg6d41rs6f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQGCMWP50hf89AwestEuoyWKAgfyKMDJk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "854975355899-f1kllhr224nc0b4n4j1jb2lg6d41rs6f.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

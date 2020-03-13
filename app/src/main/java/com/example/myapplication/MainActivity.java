@@ -10,7 +10,9 @@ import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
+import android.location.Criteria;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -19,16 +21,78 @@ import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener {
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+
+
+public class MainActivity extends AppCompatActivity implements SensorEventListener, LocationListener {
     private SensorManager senSensorManager;
     private Sensor senAccelerometer;
     private LocationManager locationManager;
     public Location loc;
+    public double latitude;
+    public double longitude;
 
     private long lastUpdate = 0;
-    private float last_x, last_y, last_z;
+    private float last_x, last_y, last_z,speed;
     private static final int SHAKE_THRESHOLD = 600;
-    private Toast toast;
+
+    FirebaseDatabase database = FirebaseDatabase.getInstance();
+
+    @Override
+    public void onLocationChanged(Location location) {
+        //Hey, a non null location! Sweet!
+        Log.d("onLocationChanged", "invoked");
+        //remove location callback:
+        locationManager.removeUpdates(this);
+
+        //open the map:
+        latitude = location.getLatitude();
+        longitude = location.getLongitude();
+        Log.d("Long ", String.valueOf(longitude));
+        Log.d("Lat",String.valueOf(latitude));
+
+        doLocationStuff(location);
+
+
+    }
+
+    @Override
+    public void onStatusChanged(String s, int i, Bundle bundle) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String s) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String s) {
+
+    }
+
+
+    public static class User {
+
+        public String accvalue;
+        public String Latitude;
+        public String Longitude;
+
+        public User(String accvalue,String Latitude,String Longitude) {
+            this.accvalue=accvalue;
+            this.Latitude=Latitude;
+            this.Longitude=Longitude;
+
+        }
+
+
+    }
+
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -44,8 +108,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.d("Info:","GPS Enabled");
 
         }
+
 
     }
 
@@ -71,9 +137,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 long diffTime = (curTime - lastUpdate);
                 lastUpdate = curTime;
 
-                float speed = Math.abs(x + y + z - last_x - last_y - last_z) / diffTime * 10000;
+                speed = Math.abs(x + y + z - last_x - last_y - last_z) / diffTime * 10000;
 
                 if (speed > SHAKE_THRESHOLD) {
+                    Log.i("Info:", "Device Shaken:" + String.valueOf(speed));
                     if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                         // TODO: Consider calling
                         //    Activity#requestPermissions
@@ -82,29 +149,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         //                                          int[] grantResults)
                         // to handle the case where the user grants the permission. See the documentation
                         // for Activity#requestPermissions for more details.
+                        Log.d("Permission", "No location prmission");
                         return;
                     }
                     loc = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                    Log.i("Info:","Device Shaken:"+String.valueOf(speed));
-                    Log.i("Info","coordinates:"+loc.getLatitude()+","+loc.getLongitude());
-                    Context context = getBaseContext();
-                    CharSequence text = "Device Shaken";
-                    int duration = Toast.LENGTH_SHORT;
-
-                    if(toast==null) {
-                        toast = Toast.makeText(context, text, duration);
-                        toast.show();
-                        new Handler().postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                toast=null;
-
-                            }
-                        }, 2000);
+                    if(loc != null) {
+                        doLocationStuff(loc);
                     }
                     else{
-                        toast.cancel();
-                        toast=null;
+                        //No last known location, request one
+                        Criteria criteria = new Criteria();
+                        String bestProvider = String.valueOf(locationManager.getBestProvider(criteria, true)).toString();
+
+                        locationManager.requestLocationUpdates(bestProvider, 1000, 0, this);
                     }
 
 
@@ -118,6 +175,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         }
 
+    }
+
+
+    private void doLocationStuff(Location loc){
+        Log.i("Info", "coordinates:" + loc.getLatitude() + "," + loc.getLongitude());
+
+
+        DatabaseReference myRef = database.getReference();
+        DatabaseReference newref = myRef.push();
+
+        newref.setValue(new User(String.valueOf(speed), String.valueOf(loc.getLatitude()), String.valueOf(loc.getLongitude())));
+
+
+        Toast.makeText(MainActivity.this, "Location Updated!", Toast.LENGTH_SHORT).show();
     }
 
     @Override

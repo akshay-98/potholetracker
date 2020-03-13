@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.Manifest;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
@@ -32,7 +33,9 @@ public class PermissionActivity extends AppCompatActivity {
                         Intent intent=new Intent(PermissionActivity.this,MainActivity.class);
                         PermissionActivity.this.startActivity(intent);
                     }
-                    @Override public void onPermissionRationaleShouldBeShown(List<PermissionRequest> permissions, PermissionToken token) {/* ... */}
+                    @Override public void onPermissionRationaleShouldBeShown(List<PermissionRequest> permissions, PermissionToken token) {
+                        Log.d("Permission:","Denied");
+                    }
                 }).check();
 
 
