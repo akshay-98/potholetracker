@@ -4,6 +4,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import androidx.camera.camera2.Camera2Config;
+
+
+
+
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
