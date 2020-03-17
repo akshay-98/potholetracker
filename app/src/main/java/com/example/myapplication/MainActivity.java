@@ -5,6 +5,18 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import androidx.camera.camera2.Camera2Config;
+import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ImageCapture;
+import androidx.camera.core.Preview;
+import androidx.camera.view.PreviewView;
+import androidx.core.content.ContextCompat;
+import androidx.lifecycle.LifecycleOwner;
+
+import androidx.camera.camera2.Camera2Config;
+import androidx.camera.core.CameraX;
+import androidx.camera.core.CameraXConfig;
+import androidx.camera.lifecycle.ProcessCameraProvider;
+import com.google.common.util.concurrent.ListenableFuture;
 
 
 
@@ -26,27 +38,37 @@ import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.concurrent.ExecutionException;
 
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener, LocationListener {
+public class MainActivity extends AppCompatActivity implements SensorEventListener, LocationListener, CameraXConfig.Provider {
     private SensorManager senSensorManager;
     private Sensor senAccelerometer;
     private LocationManager locationManager;
     public Location loc;
     public double latitude;
     public double longitude;
+    public Preview mPreview;
+    private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
+
+
+    private ImageCapture imageCapture;
+
 
     private long lastUpdate = 0;
     private float last_x, last_y, last_z,speed;
     private static final int SHAKE_THRESHOLD = 600;
 
     FirebaseDatabase database = FirebaseDatabase.getInstance();
+
+
 
     @Override
     public void onLocationChanged(Location location) {
@@ -81,6 +103,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
+    @NonNull
+    @Override
+    public CameraXConfig getCameraXConfig() {
+        return Camera2Config.defaultConfig();
+
+    }
+
 
     public static class User {
 
@@ -97,6 +126,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
 
     }
+    void bindPreview(@NonNull ProcessCameraProvider cameraProvider) {
+        PreviewView previewView=(PreviewView)findViewById(R.id.view_finder);
+        Preview preview = new Preview.Builder()
+                .build();
+
+        preview.setSurfaceProvider(previewView.getPreviewSurfaceProvider());
+
+        CameraSelector cameraSelector = new CameraSelector.Builder()
+                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                .build();
+
+        cameraProvider.bindToLifecycle((LifecycleOwner)this, cameraSelector, preview);
+    }
+
 
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -104,6 +147,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        cameraProviderFuture = ProcessCameraProvider.getInstance(this);
+        cameraProviderFuture.addListener(() -> {
+            try {
+                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+                bindPreview(cameraProvider);
+            } catch (ExecutionException | InterruptedException e) {
+                // No errors need to be handled for this Future.
+                // This should never be reached.
+            }
+        }, ContextCompat.getMainExecutor(this));
+
+
 
         Log.i("info:","app started");
 
@@ -118,7 +174,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
 
 
-    }
+
+
+}
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
